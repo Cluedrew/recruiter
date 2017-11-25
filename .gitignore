@@ -1,0 +1,4 @@
+# Recruiter GitIgnore:
+
+# Python
+__pycache__/
