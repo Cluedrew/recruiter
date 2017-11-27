@@ -5,6 +5,7 @@ There are three base node types: Node, Terminal and Nonterminal.
 """
 
 # This has also become a tokenization stratchpad for now.
+# See cfg.py.
 
 
 import enum
@@ -13,8 +14,26 @@ import re
 from op_code import OPERATIONS
 
 
+class SymbolEnum(enum.Enum):
+
+    def __new__(cls, name, is_terminal):
+        obj = object.__new__(cls)
+        obj._value_ = name
+        obj._is_terminal = is_terminal
+        return obj
+
+    # TODO: __init_subclass__ to add a hidden _EOF and
+    # check uniqueness would be great.
+
+    def is_terminal(self):
+        return self._is_terminal is True
+
+    def is_nonterminal(self):
+        return self._is_terminal is False
+
+
 @enum.unique
-class NodeSymbol(enum.Enum):
+class NodeSymbol(SymbolEnum):
     START = ('START', False)
     INSTRUCTION = ('INSTRUCTION', False)
 
@@ -25,17 +44,7 @@ class NodeSymbol(enum.Enum):
     Identifier = ('Identifier', True)
     Comma = ('Comma', True)
 
-    def is_terminal(self):
-        return self._is_terminal
-
-    def is_nonterminal(self):
-        return not self._is_terminal
-
-    def __new__(cls, name, is_terminal):
-        obj = object.__new__(cls)
-        obj._value_ = name
-        obj._is_terminal = is_terminal
-        return obj
+    _EOF = ('_EOF', None)
 
 
 class Node:

@@ -1,7 +1,7 @@
 """Simple Left/Right Lookahead 1 Action Table Generator."""
 
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 import cfg
 
@@ -84,12 +84,13 @@ def over_rules_until_false(callable, rules, symbol_data):
         pass
 
 
-class Item:
+# TODO: Python3.6's typing.NamedTuple
+_Item = namedtuple('_Item', ['rule', 'pos'])
+class Item(_Item):
 
-    def __init__(self, rule, pos=0):
+    def __new__(cls, rule, pos=0):
         assert pos <= len(rule.children)
-        self.rule = rule
-        self.pos = pos
+        return super().__new__(cls, rule, pos)
 
     @property
     def head(self):
@@ -111,6 +112,7 @@ class Item:
 
 
 class StateGraph:
+    """A graph that shows the structure of a state machine."""
 
     def __init__(self):
         # : Sequence[Tuple[Label, MutableMapping[Symbol, int]]]
@@ -146,8 +148,10 @@ def generate_state_graph(rules, symbol_data):
     # If I use the imaginary EOF -> S EOF rule I need the EOF.
     graph = StateGraph()
     # Set up with imaginary rule as the starting state.
-    imaginary_rule = ...
-    initial_label = fill_kernal_label(Label([imaginary_rule]))
+    imaginary_rule = Rule(
+        cfg.NodeSymbol._EOF,
+        (cfg.NodeSymbol.START, cfg.NodeSymbol._EOF))
+    initial_label = fill_kernal_label(Label([Item(imaginary_rule)]))
     graph.default_lookup(initial_label)
 
     for state in graph.iter_state_ids():
@@ -185,11 +189,5 @@ def fill_kernal_label(rules, kernal_label):
     return Label(new_label_rules)
 
 
-class Label:
-
-    # I don't actually know what the label is going to be but:
-    # __iter__(self) -> Iterable[Item]:
-    # Probably __hash__ which means it should be immutable.
-    # __init__(self, iterable):
-    # __len__/__bool__(self):
-    pass
+class Label(frozenset):
+    """A set of Items."""

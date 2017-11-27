@@ -1,5 +1,14 @@
 """Context-Free Grammar Parser."""
 
+# New Possible Design:
+# cfg - Central logic and shared class definitions.
+# slr1 - ActionTable generation and all its support code.
+#   from cfg import ActionTable, Rule
+# grammar - Grammar definition and wrapper for external code.
+#   from cfg import SymbolEnum, Rule, parse
+#   from slr1 import generate_action_table
+#   from ... import <might define string to token elsewhere>
+
 
 from collections.abc import Mapping
 
