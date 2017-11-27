@@ -23,6 +23,7 @@
 # 1. Tag internal structures with source text information.
 # 2. Determaine recoverable errors and how to recover.
 # 3. Imediate Substution, filling in 'I' when used and check for conflicts.
+# 4. Validate command input formats.
 # V. New Features:
 # I have ideas, but it is a bit far off right now.
 

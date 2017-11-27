@@ -16,9 +16,10 @@ from op_code import OPERATIONS
 @enum.unique
 class NodeSymbol(enum.Enum):
     START = ('START', False)
+    INSTRUCTION = ('INSTRUCTION', False)
 
     Word = ('Word', True)
-    Regester = ('Regester', True)
+    Register = ('Register', True)
     Operation = ('Operation', True)
     Integer = ('Integer', True)
     Identifier = ('Identifier', True)
@@ -72,10 +73,10 @@ class Terminal(Node):
 
 class Nonterminal(Node):
 
-    def __init__(self, children, rule):
+    def __init__(self, symbol, children):
+        self.symbol = symbol
         super().__init__()
         self._children = children
-        self.rule = rule
 
     def child(self, pos):
         return self._children[pos]
@@ -97,10 +98,10 @@ def remove_terminal_from_str(string):
     raise Exception('Could not match', string)
 
 
-class RegesterTerminal(Terminal):
+class RegisterTerminal(Terminal):
     """The litterals reserved for regesters."""
 
-    symbol = NodeSymbol.Regester
+    symbol = NodeSymbol.Register
     # This is an exact match, a r[0-9]+ with a range check might give better
     # error message. However we don't really have those yet.
     _regex = re.compile('\br([12][0-9]|3[01]|[0-9])\b')
@@ -141,7 +142,7 @@ class CommaTerminal(Terminal):
 
 
 ALL_TERMINALS = [
-    RegesterTerminal,
+    RegisterTerminal,
     OperationTerminal,
     IntegerTerminal,
     IdentifierTerminal,
