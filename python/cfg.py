@@ -10,9 +10,14 @@
 #   from ... import <might define string to token elsewhere>
 
 
+from collections import namedtuple
 from collections.abc import Mapping
 
 from node import Nonterminal
+
+
+# TODO: On Python 3.6: typing.NamedTuple is prettier and typed.
+Rule = namedtuple('Rule', ['head', 'children'])
 
 
 def parse(action_table, token_iterable):

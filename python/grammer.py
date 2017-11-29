@@ -1,9 +1,7 @@
-"""Context-Free Grammer Parsing Rules"""
-
-# See cfg.py
+"""Definition of language's actual grammer."""
 
 
-from collections import namedtuple
+import enum
 
 from node import NodeSymbol
 
@@ -14,10 +12,6 @@ Operation = NodeSymbol.Operation
 Register = NodeSymbol.Register
 Integer = NodeSymbol.Integer
 Comma = NodeSymbol.Comma
-
-
-# TODO: On Python 3.6: typing.NamedTuple is prettier and typed.
-Rule = namedtuple('Rule', ['head', 'children'])
 
 
 S_INST = Rule(START, (INSTRUCTION))

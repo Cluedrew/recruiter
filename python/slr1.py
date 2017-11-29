@@ -80,7 +80,7 @@ def does_update_set(dst_set, src_set):
 
 
 def over_rules_until_false(callable, rules, symbol_data):
-    while all(callable(rule, symbol_data) for rule in rules):
+    while any(callable(rule, symbol_data) for rule in rules):
         pass
 
 
