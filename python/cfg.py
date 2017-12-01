@@ -12,12 +12,61 @@
 
 from collections import namedtuple
 from collections.abc import Mapping
+import enum
 
-from node import Nonterminal
+
+class SymbolEnum(enum.Enum):
+
+    def __new__(cls, name, is_terminal):
+        obj = object.__new__(cls)
+        obj._value_ = name
+        obj._is_terminal = is_terminal
+        return obj
+
+    # TODO: __init_subclass__ to add a hidden _EOF and
+    # check uniqueness would be great.
+
+    def is_terminal(self):
+        return self._is_terminal is True
+
+    def is_nonterminal(self):
+        return self._is_terminal is False
 
 
 # TODO: On Python 3.6: typing.NamedTuple is prettier and typed.
 Rule = namedtuple('Rule', ['head', 'children'])
+
+
+class Node:
+
+    def __init__(self, symbol):
+        self.symbol = symbol
+
+
+class Terminal(Node):
+
+    def __init__(self, symbol, text):
+        super().__init__(symbol)
+        self.text = text
+
+    def __eq__(self, other):
+        if isinstance(other, Terminal):
+            return self.symbol == other.symbol and self.text == other.text
+        return NotImplemented
+
+    def __repr__(self):
+        return 'Terminal(symbol={!r}, text={!r})'.format(
+            self.symbol, self.text)
+
+
+class Nonterminal(Node):
+
+    def __init__(self, symbol, children, rule=None):
+        super().__init__(symbol)
+        self.children = children
+        if rule is None:
+            rule = Rule(symbol, map(lambda child: child.symbol, children))
+        self.rule = rule
 
 
 def parse(action_table, token_iterable):
@@ -56,7 +105,8 @@ def preform_reduce(stack, rule):
             raise AssertionError()
     state = popped[-1][0]
 
-    return state, Nonterminal(map(lambda x: x[1], reversed(popped)))
+    return (state,
+            Nonterminal(rule.head, map(lambda x: x[1], reversed(popped))))
 
 
 class ActionTable(Mapping):
