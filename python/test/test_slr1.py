@@ -9,8 +9,8 @@ import slr1
 
 class TestSlr1(unittest.TestCase):
 
-    def test_tiny_grammer(self):
-        table = slr1.generate_action_table([cfg.Rule('S', ('i'))], ['i'])
+    #def test_tiny_grammer(self):
+    #    table = slr1.generate_action_table([cfg.Rule('S', ('i'))], ['i'])
 
 
     def test_repr_item(self):

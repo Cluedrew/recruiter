@@ -1,15 +1,5 @@
 """Context-Free Grammar Parser."""
 
-# New Possible Design:
-# cfg - Central logic and shared class definitions.
-# slr1 - ActionTable generation and all its support code.
-#   from cfg import ActionTable, Rule
-# grammar - Grammar definition and wrapper for external code.
-#   from cfg import SymbolEnum, Rule, parse
-#   from slr1 import generate_action_table
-#   from ... import <might define string to token elsewhere>
-
-
 from collections import namedtuple
 from collections.abc import Mapping
 import enum
@@ -20,6 +10,7 @@ class SymbolEnum(enum.Enum):
     def __new__(cls, name, is_terminal):
         obj = object.__new__(cls)
         obj._value_ = name
+        # TODO: Maybe story a more general 'kind'
         obj._is_terminal = is_terminal
         return obj
 
@@ -31,6 +22,10 @@ class SymbolEnum(enum.Enum):
 
     def is_nonterminal(self):
         return self._is_terminal is False
+
+    def __repr__(self):
+        return '<{}.{}: {!r}>'.format(
+            self.__class__.__name__, self.name, self._is_terminal)
 
 
 # TODO: On Python 3.6: typing.NamedTuple is prettier and typed.
@@ -68,6 +63,10 @@ class Nonterminal(Node):
             rule = Rule(symbol, map(lambda child: child.symbol, children))
         self.rule = rule
 
+    def __repr__(self):
+        return 'Nonterminal(symbol={!r}, children=<...>, rule={!r})'.format(
+            self.symbol, self.rule)
+
 
 def parse(action_table, token_iterable):
     stack = ParsingStack()
@@ -104,9 +103,8 @@ def preform_reduce(stack, rule):
             # This should only ever be an internal error though.
             raise AssertionError()
     state = popped[-1][0]
-
-    return (state,
-            Nonterminal(rule.head, map(lambda x: x[1], reversed(popped))))
+    node = Nonterminal(rule.head, map(lambda x: x[1], reversed(popped)), rule)
+    return (state, node)
 
 
 class ActionTable(Mapping):
@@ -116,7 +114,8 @@ class ActionTable(Mapping):
         self._data = {}
         self.starting_state = 0
 
-    def add_action(self, state, symbol, action):
+    def __setitem__(self, key, value):
+        state, symbol = key
         section = self._data.setdefault(state, {})
         if symbol in section:
             raise Exception('Conflict found:', state, symbol)
