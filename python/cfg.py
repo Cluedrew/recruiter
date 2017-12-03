@@ -3,6 +3,7 @@
 from collections import namedtuple
 from collections.abc import Mapping
 import enum
+import itertools
 
 
 class SymbolEnum(enum.Enum):
@@ -68,10 +69,10 @@ class Nonterminal(Node):
             self.symbol, self.rule)
 
 
-def parse(action_table, token_iterable):
+def parse(action_table, terminal_iterable, eof_symbol):
     stack = ParsingStack()
     current_state = action_table.starting_state
-    stream = PushBackStream(token_iterable)
+    stream = PushBackStream(terminal_iterable, eof_symbol)
 
     for token in stream.in_place():
         action = action_table[current_state, token]
@@ -89,7 +90,7 @@ def parse(action_table, token_iterable):
     if stack:
         raise AssertionError('Extra symbols on the stack.')
     final_node = next(stream)
-    assert next(stream, None) is None
+    assert next(stream).symbol == eof_symbol
     return final_node
 
 
@@ -149,6 +150,18 @@ class Action:
         self.kind = kind
         self.data = data
 
+    @classmethod
+    def shift(cls, to_state):
+        return cls('shift', to_state)
+
+    @classmethod
+    def reduce(cls, rule):
+        return cls('reduce', rule)
+
+    @classmethod
+    def done(cls):
+        return cls('done', None)
+
 
 class ParsingStack:
 
@@ -173,8 +186,8 @@ class ParsingStack:
 
 class PushBackStream:
 
-    def __init__(self, iterable):
-        self._iter = iterable
+    def __init__(self, iterable, eof_symbol):
+        self._iter = itertools.chain(iterable, [Node(eof_symbol)])
         self._back = []
 
     def __iter__(self):

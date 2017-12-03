@@ -28,7 +28,39 @@ class TestSymbolEnum(unittest.TestCase):
         self.assertEqual('<Enum1.D: None>', repr(self.Enum1.D))
 
 
+class TestRule(unittest.TestCase):
+
+    def test_new_rule(self):
+        rule = cfg.Rule(0, (1, 2))
+        self.assertEqual(0, rule.head)
+        self.assertEqual((1, 2), rule.children)
+
+
 class TestActionTable(unittest.TestCase):
 
     def test_new_action_table(self):
         self.assertEqual(0, len(cfg.ActionTable()))
+
+
+class TestPasingStack(unittest.TestCase):
+
+    def test_pasing_stack(self):
+        stack = cfg.ParsingStack()
+        stack.push('state', 'node')
+        self.assertEqual('state', stack.peek_state())
+        self.assertEqual('node', stack.peek_node())
+        self.assertEqual(1, len(stack))
+        self.assertEqual(('state', 'node'), stack.pop())
+        self.assertEqual(0, len(stack))
+
+
+class TestPushBackStream(unittest.TestCase):
+
+    def test_push_pack_stream(self):
+        stream = cfg.PushBackStream(['first', 'second', 'third'], 'eof')
+        self.assertEqual('first', next(stream.in_place()))
+        stream.push_back('alpha')
+        self.assertEqual('alpha', next(stream.in_place()))
+        rest = list(stream)
+        self.assertEqual(['alpha', 'first', 'second', 'third'], rest[:-1])
+        self.assertEqual('eof', rest[-1].symbol)

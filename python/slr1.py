@@ -15,14 +15,19 @@ class SymbolData:
 
 
 def generate_action_table(symbols, starting_symbol, rules):
+    symbol_data = make_symbol_data(symbols, starting_symbol, rules)
+    state_graph = make_state_graph(
+        symbols, starting_symbol, rules, symbol_data)
+    return make_action_table(state_graph, symbols, symbol_data)
+
+
+def make_symbol_data(symbols, starting_symbol, rules):
     symbol_data = defaultdict(SymbolData)
-    fill_terminals_first(symbols, symbol_data)
+    fill_terminals_first_set(symbols, symbol_data)
     over_rules_until_false(update_rule_nullable, rules, symbol_data)
     over_rules_until_false(update_rule_first_set, rules, symbol_data)
     over_rules_until_false(update_rule_follow_set, rules, symbol_data)
-    state_graph = generate_state_graph(
-        symbols, starting_symbol, rules, symbol_data)
-    return make_action_table(state_graph, symbols, symbol_data)
+    return symbol_data
 
 
 def fill_terminals_first_set(symbols, symbol_data):
@@ -134,10 +139,13 @@ class StateGraph:
             return id
 
     def lookup(self, label):
-        for state_id, state_label in enumerate(self._state):
+        for state_id, state_label in enumerate(self._states):
             if state_label == label:
                 return state_id
         raise KeyError(label)
+
+    def label_of(self, state):
+        return self._states[state][0]
 
     def add_transition(self, src_id, symbol, dst_id):
         transitions = self._states[src_id][1]
@@ -157,23 +165,22 @@ class StateGraph:
         return self._states[state][1][edge]
 
 
-def generate_state_graph(symbols, starting_symbol, rules, symbol_data):
-    # If I use the imaginary EOF -> S EOF rule I need the EOF.
+def make_state_graph(symbols, starting_symbol, rules, symbol_data):
     graph = StateGraph()
-    # Set up with imaginary rule as the starting state.
     imaginary_rule = make_imaginary_rule(symbols, starting_symbol)
-    initial_label = fill_kernal_label(Label([Item(imaginary_rule)]))
+    initial_label = fill_kernal_label(rules, Label([Item(imaginary_rule)]))
     graph.default_lookup(initial_label)
 
     for state in graph.iter_state_ids():
-        for symbol in symbols_not_eof:
-            build_transition(graph, state, symbol)
+        for symbol in symbols:
+            if symbol.is_terminal() or symbol.is_nonterminal():
+                build_transition(graph, rules, state, symbol)
     return graph
 
 
 def make_imaginary_rule(symbols, starting_symbol):
     eof = find_eof(symbols)
-    return Rule(eof, (starting_symbol, eof))
+    return cfg.Rule(eof, (starting_symbol, eof))
 
 
 def find_eof(symbols):
@@ -181,17 +188,17 @@ def find_eof(symbols):
         symbol.is_terminal() or symbol.is_nonterminal()))
 
 
-def build_transition(graph, state, symbol):
-    dst_label = find_destination_label(graph.lookup(state), symbol)
+def build_transition(graph, rules, state, symbol):
+    dst_label = find_destination_label(rules, graph.label_of(state), symbol)
     if not dst_label:
         return None
-    dst_state = graph.default_lookup()
+    dst_state = graph.default_lookup(dst_label)
     graph.add_transition(state, symbol, dst_state)
     return dst_state
 
 
-def find_destination_label(source_label, symbol):
-    return fill_kernal_label(shift_all(source_label, symbol))
+def find_destination_label(rules, source_label, symbol):
+    return fill_kernal_label(rules, shift_all(source_label, symbol))
 
 
 def shift_all(label, symbol):
@@ -202,7 +209,7 @@ def shift_all(label, symbol):
 def fill_kernal_label(rules, kernal_label):
     new_label_rules = list(kernal_label)
     for item in new_label_rules:
-        symbol = item_next_symbol(item)
+        symbol = item.next_symbol()
         if symbol is not None and symbol.is_nonterminal():
             for rule in filter(lambda r: r.head == symbol, rules):
                 if rule not in new_label_rules:
@@ -228,16 +235,14 @@ def add_shift_and_done_operations(table, graph, symbols):
             if shift_all(label, symbol):
                 if symbol is not eof:
                     dst = graph.follow_transition(state, symbol)
-                    table[state, symbol] = cfg.Action('shift')
+                    table[state, symbol] = cfg.Action.shift(dst)
                 else:
-                    table[state, symbol] = cfg.Action('done')
+                    table[state, symbol] = cfg.Action.done()
 
 
 def add_reduce_operations(table, graph, symbol_data):
     for state, label in graph.iter_states():
         for item in label:
             if item.is_full():
-                follow_set = symbol_data[item.head].follow_set
-                rule = item.rule
-                for symbol in follow_set:
-                    table[state, symbol] = cfg.Action('reduce', rule)
+                for symbol in symbol_data[item.head].follow_set:
+                    table[state, symbol] = cfg.Action.reduce(item.rule)
