@@ -6,14 +6,6 @@ from collections import defaultdict, namedtuple
 import cfg
 
 
-class SymbolData:
-
-    def __init__(self):
-        self.nullable = False
-        self.first_set = set()
-        self.follow_set = set()
-
-
 def generate_action_table(symbols, starting_symbol, rules):
     symbol_data = make_symbol_data(symbols, starting_symbol, rules)
     state_graph = make_state_graph(
@@ -21,8 +13,22 @@ def generate_action_table(symbols, starting_symbol, rules):
     return make_action_table(state_graph, symbols, symbol_data)
 
 
+class SymbolData(defaultdict):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(SymbolDataEntry, *args, **kwargs)
+
+
+class SymbolDataEntry:
+
+    def __init__(self):
+        self.nullable = False
+        self.first_set = set()
+        self.follow_set = set()
+
+
 def make_symbol_data(symbols, starting_symbol, rules):
-    symbol_data = defaultdict(SymbolData)
+    symbol_data = SymbolData()
     fill_terminals_first_set(symbols, symbol_data)
     over_rules_until_false(update_rule_nullable, rules, symbol_data)
     over_rules_until_false(update_rule_first_set, rules, symbol_data)
