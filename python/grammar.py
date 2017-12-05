@@ -23,6 +23,12 @@ class NodeSymbol(cfg.SymbolEnum):
     _EOF = ('_EOF', None)
 
 
+def terminal_iter(inner_iter, symbol_enum):
+    for symbol, text in inner_iter:
+        yield TerminalNode(symbol, text)
+    yield Node(get_eof_symbol(symbol_enum))
+
+
 def iter_terminals_from_str(string):
     for part in string.split():
         while part:
@@ -34,7 +40,8 @@ def remove_terminal_from_str(string):
     for symbol, pattern in TERMINAL_PATTERNS:
         match = pattern.match(string)
         if match:
-            return (cfg.Terminal(symbol, match.group()), string[match.end():])
+            return (cfg.TerminalNode(
+                symbol, match.group()), string[match.end():])
     raise Exception('Could not match', string)
 
 

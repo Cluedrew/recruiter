@@ -4,7 +4,7 @@
 import unittest
 
 from cfg import (
-    Terminal,
+    TerminalNode,
     )
 from grammar import (
     iter_terminals_from_str,
@@ -20,9 +20,9 @@ class TestNode(unittest.TestCase):
 
     def test_iter_terminals_from_str(self):
         target = [
-            Terminal(NodeSymbol.Register, 'r4'),
-            Terminal(NodeSymbol.Comma, ','),
-            Terminal(NodeSymbol.Identifier, 'hi'),
+            TerminalNode(NodeSymbol.Register, 'r4'),
+            TerminalNode(NodeSymbol.Comma, ','),
+            TerminalNode(NodeSymbol.Identifier, 'hi'),
             ]
         self.assertEqual(target, list_terminals_from_str('r4 ,hi'))
 
@@ -33,4 +33,4 @@ class TestNode(unittest.TestCase):
 
     def test_parse_operation_upper(self):
         tokens = list_terminals_from_str('ADD')
-        self.assertEqual([Terminal(NodeSymbol.Operation, 'ADD')], tokens)
+        self.assertEqual([TerminalNode(NodeSymbol.Operation, 'ADD')], tokens)

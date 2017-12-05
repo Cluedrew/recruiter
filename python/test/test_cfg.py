@@ -36,6 +36,13 @@ class TestRule(unittest.TestCase):
         self.assertEqual((1, 2), rule.children)
 
 
+class TestNode(unittest.TestCase):
+
+    def test_terminal_node_repr(self):
+        self.assertEqual("TerminalNode(symbol='sym', text='str')",
+                         repr(cfg.TerminalNode('sym', 'str')))
+
+
 class TestActionTable(unittest.TestCase):
 
     def test_new_action_table(self):

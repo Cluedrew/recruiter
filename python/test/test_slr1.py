@@ -1,6 +1,7 @@
 """Testing of the slr1 ActionTable generator."""
 
 
+from collections import defaultdict
 import unittest
 
 import cfg
@@ -92,3 +93,18 @@ class TestMakeSymbolData(unittest.TestCase):
         symbol_data[LetterSym.D].first_set = {'delta'}
         self.assertEqual({'ceta', 'alpha'},
                          slr1.rule_first_set(rule, symbol_data))
+
+    def test_rule_follow_set(self):
+        symbol_data = slr1.SymbolData()
+        rule = cfg.Rule(LetterSym.B, (LetterSym.A, LetterSym.C, LetterSym.D))
+        symbol_data[LetterSym.C].nullable = True
+        symbol_data[LetterSym.C].first_set = {'ceta'}
+        symbol_data[LetterSym.A].first_set = {'alpha'}
+        symbol_data[LetterSym.D].first_set = {'delta'}
+        symbol_data[LetterSym.B].follow_set = {'beta'}
+        self.assertEqual(defaultdict(set, {
+                LetterSym.A: {'ceta', 'delta'},
+                LetterSym.C: {'delta'},
+                LetterSym.D: {'beta'},
+                }),
+            slr1.rule_follow_set(rule, symbol_data))

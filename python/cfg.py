@@ -29,6 +29,11 @@ class SymbolEnum(enum.Enum):
             self.__class__.__name__, self.name, self._is_terminal)
 
 
+def get_eof_symbol(symbol_enum):
+    eofs = filter(lambda s: s._is_terminal is None, symbol_enum)
+    return eofs[0]
+
+
 # TODO: On Python 3.6: typing.NamedTuple is prettier and typed.
 Rule = namedtuple('Rule', ['head', 'children'])
 
@@ -39,23 +44,23 @@ class Node:
         self.symbol = symbol
 
 
-class Terminal(Node):
+class TerminalNode(Node):
 
     def __init__(self, symbol, text):
         super().__init__(symbol)
         self.text = text
 
     def __eq__(self, other):
-        if isinstance(other, Terminal):
+        if isinstance(other, TerminalNode):
             return self.symbol == other.symbol and self.text == other.text
         return NotImplemented
 
     def __repr__(self):
-        return 'Terminal(symbol={!r}, text={!r})'.format(
-            self.symbol, self.text)
+        return '{}(symbol={!r}, text={!r})'.format(
+            self.__class__.__name__, self.symbol, self.text)
 
 
-class Nonterminal(Node):
+class NonterminalNode(Node):
 
     def __init__(self, symbol, children, rule=None):
         super().__init__(symbol)
@@ -65,8 +70,8 @@ class Nonterminal(Node):
         self.rule = rule
 
     def __repr__(self):
-        return 'Nonterminal(symbol={!r}, children=<...>, rule={!r})'.format(
-            self.symbol, self.rule)
+        return '{}(symbol={!r}, children=<...>, rule={!r})'.format(
+            self.__class__.__name__, self.symbol, self.rule)
 
 
 def parse(action_table, terminal_iterable, eof_symbol):
@@ -104,7 +109,8 @@ def preform_reduce(stack, rule):
             # This should only ever be an internal error though.
             raise AssertionError()
     state = popped[-1][0]
-    node = Nonterminal(rule.head, map(lambda x: x[1], reversed(popped)), rule)
+    node = NonterminalNode(
+        rule.head, map(lambda x: x[1], reversed(popped)), rule)
     return (state, node)
 
 
