@@ -108,3 +108,11 @@ class TestMakeSymbolData(unittest.TestCase):
                 LetterSym.D: {'beta'},
                 }),
             slr1.rule_follow_set(rule, symbol_data))
+
+
+class TestMakeStateGraph(unittest.TestCase):
+    pass
+
+
+class TestMakeActionTable(unittest.TestCase):
+    pass

@@ -30,6 +30,7 @@ class SymbolEnum(enum.Enum):
 
 
 def get_eof_symbol(symbol_enum):
+    """Get the End-Of-File symbol for a SymbolEnum."""
     eofs = filter(lambda s: s._is_terminal is None, symbol_enum)
     return eofs[0]
 
@@ -74,10 +75,22 @@ class NonterminalNode(Node):
             self.__class__.__name__, self.symbol, self.rule)
 
 
-def parse(action_table, terminal_iterable, eof_symbol):
+def parse(symbol_enum, action_table, base_iterable):
+    """Parse in input
+
+    symbol_enum: The SymbolEnum subclass that symbols for the grammar
+        are drawn from.
+    action_table: ActionTable stating what action to take at any given
+        point.
+    base_iterable: Produces (symbol, text) pairs for every token in
+        the input file.
+
+    return: A Node is the root of all other nodes in input.
+    """
     stack = ParsingStack()
     current_state = action_table.starting_state
-    stream = PushBackStream(terminal_iterable, eof_symbol)
+    eof_symbol = get_eof_symbol(symbol_enum)
+    stream = NodeStream(base_iterable, eof_symbol)
 
     for token in stream.in_place():
         action = action_table[current_state, token]
@@ -190,11 +203,17 @@ class ParsingStack:
         return len(self._data)
 
 
-class PushBackStream:
+class NodeStream:
 
     def __init__(self, iterable, eof_symbol):
-        self._iter = itertools.chain(iterable, [Node(eof_symbol)])
+        self._iter = self._wrap_iter(iterable, eof_symbol)
         self._back = []
+
+    @staticmethod
+    def _wrap_iter(iterable, eof_symbol):
+        for symbol, text in iterable:
+            yield TerminalNode(symbol, text)
+        yield Node(eof_symbol)
 
     def __iter__(self):
         return self

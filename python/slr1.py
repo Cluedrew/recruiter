@@ -3,7 +3,12 @@
 
 from collections import defaultdict, namedtuple
 
-import cfg
+from cfg import (
+    Action,
+    ActionTable,
+    get_eof_symbol,
+    Rule,
+    )
 
 
 def generate_action_table(symbols, starting_symbol, rules):
@@ -185,22 +190,15 @@ def make_state_graph(symbols, starting_symbol, rules, symbol_data):
 
 
 def make_imaginary_rule(symbols, starting_symbol):
-    eof = find_eof(symbols)
-    return cfg.Rule(eof, (starting_symbol, eof))
-
-
-def find_eof(symbols):
-    return next(symbol for symbol in symbols if not (
-        symbol.is_terminal() or symbol.is_nonterminal()))
+    eof = get_eof_symbol(symbols)
+    return Rule(eof, (starting_symbol, eof))
 
 
 def build_transition(graph, rules, state, symbol):
     dst_label = find_destination_label(rules, graph.label_of(state), symbol)
-    if not dst_label:
-        return None
-    dst_state = graph.default_lookup(dst_label)
-    graph.add_transition(state, symbol, dst_state)
-    return dst_state
+    if dst_label:
+        dst_state = graph.default_lookup(dst_label)
+        graph.add_transition(state, symbol, dst_state)
 
 
 def find_destination_label(rules, source_label, symbol):
@@ -228,22 +226,22 @@ class Label(frozenset):
 
 
 def make_action_table(graph, symbols, symbol_data):
-    action_table = cfg.ActionTable()
+    action_table = ActionTable()
     add_shift_and_done_operations(action_table, graph, symbols)
     add_reduce_operations(action_table, graph, symbol_data)
     return action_table
 
 
 def add_shift_and_done_operations(table, graph, symbols):
-    eof = find_eof(symbols)
+    eof = get_eof_symbol(symbols)
     for state, label in graph.iter_states():
         for symbol in symbols:
             if shift_all(label, symbol):
                 if symbol is not eof:
                     dst = graph.follow_transition(state, symbol)
-                    table[state, symbol] = cfg.Action.shift(dst)
+                    table[state, symbol] = Action.shift(dst)
                 else:
-                    table[state, symbol] = cfg.Action.done()
+                    table[state, symbol] = Action.done()
 
 
 def add_reduce_operations(table, graph, symbol_data):
@@ -251,4 +249,4 @@ def add_reduce_operations(table, graph, symbol_data):
         for item in label:
             if item.is_full():
                 for symbol in symbol_data[item.head].follow_set:
-                    table[state, symbol] = cfg.Action.reduce(item.rule)
+                    table[state, symbol] = Action.reduce(item.rule)
