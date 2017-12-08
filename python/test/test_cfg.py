@@ -1,6 +1,7 @@
 """Testing for the Context-Free Grammer."""
 
 
+import itertools
 import unittest
 
 
@@ -61,13 +62,15 @@ class TestPasingStack(unittest.TestCase):
         self.assertEqual(0, len(stack))
 
 
-class TestPushBackStream(unittest.TestCase):
+class TestNodeStream(unittest.TestCase):
 
-    def test_push_pack_stream(self):
-        stream = cfg.PushBackStream(['first', 'second', 'third'], 'eof')
-        self.assertEqual('first', next(stream.in_place()))
-        stream.push_back('alpha')
-        self.assertEqual('alpha', next(stream.in_place()))
+    def test_node_stream(self):
+        raw = [(0, 'alpha'), (1, 'first'), (2, 'second'), (3, 'third')]
+        terminals = list(itertools.starmap(cfg.TerminalNode, raw))
+        stream = cfg.NodeStream(raw[1:], 'eof')
+        self.assertEqual(terminals[1], next(stream.in_place()))
+        stream.push_back(terminals[0])
+        self.assertEqual(terminals[0], next(stream.in_place()))
         rest = list(stream)
-        self.assertEqual(['alpha', 'first', 'second', 'third'], rest[:-1])
+        self.assertEqual(terminals, rest[:-1])
         self.assertEqual('eof', rest[-1].symbol)

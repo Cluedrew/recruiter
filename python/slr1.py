@@ -1,6 +1,11 @@
 """Simple Left/Right Lookahead 1 Action Table Generator."""
 
 
+__all__ = [
+    'generate_action_table',
+    ]
+
+
 from collections import defaultdict, namedtuple
 
 from cfg import (
@@ -35,6 +40,7 @@ class SymbolDataEntry:
 def make_symbol_data(symbols, starting_symbol, rules):
     symbol_data = SymbolData()
     fill_terminals_first_set(symbols, symbol_data)
+    #? symbol_data[starting_symbol].follow_set.add(get_eof_symbol(symbols))
     over_rules_until_false(update_rule_nullable, rules, symbol_data)
     over_rules_until_false(update_rule_first_set, rules, symbol_data)
     over_rules_until_false(update_rule_follow_set, rules, symbol_data)

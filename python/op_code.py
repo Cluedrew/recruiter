@@ -42,10 +42,26 @@ from _op_code import (
     )
 
 
+class OpData:
+    """Stores information about the operation.
+
+    op_code: The integer value that repersents the operation. Pseudo-
+        operations that don't repersent a particular command store
+        None instead.
+    format: The layout of the regesters and imediate values the command
+        stores and how they can be presented in code.
+    """
+
+    def __init__(self, op_code, format):
+        self.op_code = op_code
+        self.format = format
+
+
 OpCodeMapping = Mapping[str, Optional[str]]
 
 
-# Never mind: PEP 526 has not been completed.
+# TODO: Python 3.6 has the variable annotation, although I don't know
+# if they work quite like this.
 #OPERATIONS: FrozenSet[str]
 #CAPTAIN_OPS: OpCodeMapping
 #MORTAR_OPS: OpCodeMapping
