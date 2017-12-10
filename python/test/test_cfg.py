@@ -6,6 +6,12 @@ import unittest
 
 
 import cfg
+from cfg import (
+    Rule,
+    RuleListing,
+    RuleMap,
+    SymbolEnum,
+    )
 
 
 class TestSymbolEnum(unittest.TestCase):
@@ -35,6 +41,35 @@ class TestRule(unittest.TestCase):
         rule = cfg.Rule(0, (1, 2))
         self.assertEqual(0, rule.head)
         self.assertEqual((1, 2), rule.children)
+
+
+# Can I make this one work?
+class TestRuleListing(unittest.TestCase):
+
+    def do_not_test_new_rule_listing(self):
+        class Enum1(SymbolEnum):
+            N = ('N', False)
+            T = ('T', True)
+
+        class Rules(RuleListing, symbols_from=Enum1):
+            TWO = 'N', ['T', 'T']
+
+        self.assertIsInstance(Rules.TWO, Rule)
+        self.assertEqual(Rule(Enum1.N, (Enum1.T, Enum1.T)), Rules.TWO)
+
+
+class TestRuleMap(unittest.TestCase):
+
+    def test_new_rule_map(self):
+        class Enum1(SymbolEnum):
+            N = ('N', False)
+            T = ('T', True)
+
+        rule_map = RuleMap(
+            Enum1,
+            TWO=('N', ('T', 'T')),
+            )
+        self.assertEqual(rule_map['TWO'], Rule(Enum1.N, (Enum1.T, Enum1.T)))
 
 
 class TestNode(unittest.TestCase):

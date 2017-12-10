@@ -45,7 +45,7 @@ class SymbolEnum(enum.Enum):
 
 def get_eof_symbol(symbol_enum):
     """Get the End-Of-File symbol for a SymbolEnum."""
-    eofs = filter(lambda s: s._is_terminal is None, symbol_enum)
+    eofs = [symbol for symbol in symbol_enum if symbol._is_terminal is None]
     return eofs[0]
 
 
@@ -53,10 +53,70 @@ def get_eof_symbol(symbol_enum):
 Rule = namedtuple('Rule', ['head', 'children'])
 
 
+# TODO: It doesn't work yet, better interface than RuleMap though.
+# TODO: Python3.6 __init_subclass__ should replace the meta class.
+# I think it will work and be a one/two line function.
+RuleListing = None
+class RuleListingMeta(enum.EnumMeta):
+
+    @classmethod
+    def __prepare__(meta, class_name, bases, *, symbols_from=None):
+        return super().__prepare__(class_name, bases)
+
+    @staticmethod
+    def __new__(meta, class_name, bases, namespace, *, symbols_from=None):
+        if RuleListing is not None and symbols_from is None:
+            raise RuntimeError('Must provide symbols_from.')
+        else:
+            # Yeah, I cheat to get around _EnumDict.
+            namespace._symbols_from = symbols_from
+        return super().__new__(meta, class_name, bases, namespace)
+
+
+class RuleListing(Rule, enum.Enum, metaclass=RuleListingMeta):
+
+    def __new__(cls, head, children):
+        def as_symbol(text):
+            return getattr(cls.__dict__._symbol_type, text)
+
+        return super().__new__(cls,
+            as_symbol(head), tuple(map(as_symbol, children)))
+
+
+class RuleMap(dict):
+
+   def __init__(self, symbol_type, **item_pairs):
+       self._symbol_type = symbol_type
+       for key, value in item_pairs.items():
+           self[key] = value
+
+   def __setitem__(self, key, item):
+       def translate(value):
+           if isinstance(value, self._symbol_type):
+               return value
+           elif isinstance(value, str):
+               return getattr(self._symbol_type, value)
+           else:
+               raise TypeError(value)
+
+       if isinstance(item, Rule):
+           super().__setitem__(key, item)
+       elif isinstance(item, (tuple, list)) and 2 == len(item):
+           super().__setitem__(
+               key,
+               Rule(translate(item[0]), tuple(map(translate, item[1]))))
+       else:
+           raise TypeError(item)
+
+
 class Node:
 
     def __init__(self, symbol):
         self.symbol = symbol
+
+    def __repr__(self):
+        return '{}(symbol={!r})'.format(
+            self.__class__.__name__, self.symbol)
 
 
 class TerminalNode(Node):

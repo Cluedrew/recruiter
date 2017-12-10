@@ -17,6 +17,7 @@ from slr1 import (
     Label,
     rule_first_set,
     rule_follow_set,
+    shift_all,
     SymbolData,
     update_rule_nullable,
     )
@@ -126,17 +127,54 @@ class TestMakeSymbolData(unittest.TestCase):
 
 class TestMakeStateGraph(unittest.TestCase):
 
-    def test_fill_kernal_label(self):
-        class Sym(SymbolEnum):
-            HEAD = ('HEAD', False)
-            A = ('A', False)
-            B = ('B', False)
-            X = ('X', False)
-            Y = ('Y', False)
-            c = ('c', True)
-            x = ('x', True)
-            y = ('y', True)
+    class Sym1(SymbolEnum):
+        HEAD = ('HEAD', False)
+        A = ('A', False)
+        B = ('B', False)
+        X = ('X', False)
+        Y = ('Y', False)
+        c = ('c', True)
+        x = ('x', True)
+        y = ('y', True)
 
+    def test_shift_all(self):
+        Sym = self.Sym1
+        rule = Rule(Sym.HEAD, (Sym.A, Sym.B))
+        items = (
+            Item(Rule(Sym.HEAD, (Sym.A,)), 1),
+            Item(Rule(Sym.HEAD, (Sym.A, Sym.B)), 1),
+            Item(Rule(Sym.HEAD, (Sym.A, Sym.A)), 1),
+            )
+        expect_items = (
+            Item(Rule(Sym.HEAD, (Sym.A, Sym.A)), 2),
+            )
+        self.assertEqual(
+            Label(expect_items),
+            shift_all(Label(items), Sym.A))
+
+    def small_label(self, head, children, place):
+        return Label([Item(Rule(head, children), place)])
+
+    def test_shift_all_match(self):
+        Sym = self.Sym1
+        self.assertEqual(
+            self.small_label(Sym.HEAD, (Sym.A,), 1),
+            shift_all(self.small_label(Sym.HEAD, (Sym.A,), 0), Sym.A))
+
+    def test_shift_all_mismatch(self):
+        Sym = self.Sym1
+        self.assertEqual(
+            Label(),
+            shift_all(self.small_label(Sym.HEAD, (Sym.A,), 0), Sym.B))
+
+    def test_shift_all_end(self):
+        Sym = self.Sym1
+        self.assertEqual(
+            Label(),
+            shift_all(self.small_label(Sym.HEAD, (Sym.A,), 1), Sym.A))
+
+    def test_fill_kernal_label(self):
+        Sym = self.Sym1
         rules = (
             Rule(Sym.HEAD, (Sym.A, Sym.B)),
             Rule(Sym.A, (Sym.A, Sym.B)),

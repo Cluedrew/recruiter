@@ -1,11 +1,16 @@
 """Definition of language's actual grammer."""
 
 
+__all__ = [
+    ]
+
+
 import enum
 import re
 
 import cfg
 from op_code import OPERATIONS
+from slr1 import generate_action_table
 
 
 @enum.unique
@@ -23,25 +28,18 @@ class NodeSymbol(cfg.SymbolEnum):
     _EOF = ('_EOF', None)
 
 
-def terminal_iter(inner_iter, symbol_enum):
-    for symbol, text in inner_iter:
-        yield TerminalNode(symbol, text)
-    yield Node(get_eof_symbol(symbol_enum))
-
-
 def iter_terminals_from_str(string):
     for part in string.split():
         while part:
-            token, part = remove_terminal_from_str(part)
-            yield token
+            symbol, text, part = remove_terminal_from_str(part)
+            yield symbol, text
 
 
 def remove_terminal_from_str(string):
     for symbol, pattern in TERMINAL_PATTERNS:
         match = pattern.match(string)
         if match:
-            return (cfg.TerminalNode(
-                symbol, match.group()), string[match.end():])
+            return symbol, match.group(), string[match.end():]
     raise Exception('Could not match', string)
 
 
@@ -62,8 +60,8 @@ Integer = NodeSymbol.Integer
 Comma = NodeSymbol.Comma
 
 
-S_INST = cfg.Rule(START, (INSTRUCTION))
-INST_OP = cfg.Rule(INSTRUCTION, (Operation))
+S_INST = cfg.Rule(START, (INSTRUCTION,))
+INST_OP = cfg.Rule(INSTRUCTION, (Operation,))
 INST_OA = cfg.Rule(INSTRUCTION, (Operation, Register))
 INST_OAI = cfg.Rule(INSTRUCTION, (Operation, Register, Comma, Integer))
 INST_OABC = cfg.Rule(
@@ -71,3 +69,12 @@ INST_OABC = cfg.Rule(
 
 
 ALL_RULES = (S_INST, INST_OP, INST_OA, INST_OAI, INST_OABC)
+
+
+_action_table = None
+# generate_action_table(NodeSymbol, NodeSymbol.START, ALL_RULES)
+
+
+def parse_string(string):
+    iter = iter_terminals_from_str(string)
+    return cfg.parse(NodeSymbol, _action_table, iter)

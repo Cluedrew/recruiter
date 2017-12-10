@@ -20,9 +20,9 @@ class TestNode(unittest.TestCase):
 
     def test_iter_terminals_from_str(self):
         target = [
-            TerminalNode(NodeSymbol.Register, 'r4'),
-            TerminalNode(NodeSymbol.Comma, ','),
-            TerminalNode(NodeSymbol.Identifier, 'hi'),
+            (NodeSymbol.Register, 'r4'),
+            (NodeSymbol.Comma, ','),
+            (NodeSymbol.Identifier, 'hi'),
             ]
         self.assertEqual(target, list_terminals_from_str('r4 ,hi'))
 
@@ -33,4 +33,4 @@ class TestNode(unittest.TestCase):
 
     def test_parse_operation_upper(self):
         tokens = list_terminals_from_str('ADD')
-        self.assertEqual([TerminalNode(NodeSymbol.Operation, 'ADD')], tokens)
+        self.assertEqual([(NodeSymbol.Operation, 'ADD')], tokens)
