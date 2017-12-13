@@ -9,7 +9,6 @@ import cfg
 from cfg import (
     Rule,
     RuleListing,
-    RuleMap,
     SymbolEnum,
     )
 
@@ -43,33 +42,37 @@ class TestRule(unittest.TestCase):
         self.assertEqual((1, 2), rule.children)
 
 
-# Can I make this one work?
 class TestRuleListing(unittest.TestCase):
 
-    def do_not_test_new_rule_listing(self):
+    def test_new_rule_listing(self):
         class Enum1(SymbolEnum):
             N = ('N', False)
             T = ('T', True)
 
-        class Rules(RuleListing, symbols_from=Enum1):
+        class Rules(RuleListing, symbol_type=Enum1):
             TWO = 'N', ['T', 'T']
 
         self.assertIsInstance(Rules.TWO, Rule)
         self.assertEqual(Rule(Enum1.N, (Enum1.T, Enum1.T)), Rules.TWO)
 
-
-class TestRuleMap(unittest.TestCase):
-
-    def test_new_rule_map(self):
-        class Enum1(SymbolEnum):
+    def test_two_rule_listings(self):
+        class Enum2(SymbolEnum):
             N = ('N', False)
             T = ('T', True)
 
-        rule_map = RuleMap(
-            Enum1,
-            TWO=('N', ('T', 'T')),
-            )
-        self.assertEqual(rule_map['TWO'], Rule(Enum1.N, (Enum1.T, Enum1.T)))
+        class Rules2(RuleListing, symbol_type=Enum2):
+            TWO = 'N', ['T', 'T']
+
+        class Enum3(SymbolEnum):
+            SUN = ('SUN', False)
+            MOON = ('MOON', True)
+            STAR = ('STAR', True)
+
+        class Rules3(RuleListing, symbol_type=Enum3):
+            SKY = 'SUN', ['MOON', 'STAR', 'STAR']
+
+        self.assertIsInstance(Rules2.TWO.head, Enum2)
+        self.assertIsInstance(Rules3.SKY.head, Enum3)
 
 
 class TestNode(unittest.TestCase):

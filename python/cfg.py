@@ -9,8 +9,9 @@ __all__ = [
     'NonterminalNode',
     'parse',
     'Rule',
+    'RuleListing',
     'SymbolEnum',
-    'Terminal',
+    'TerminalNode',
     ]
 
 
@@ -22,30 +23,29 @@ import itertools
 
 class SymbolEnum(enum.Enum):
 
-    def __new__(cls, name, is_terminal):
+    def __new__(cls, name, symbol_kind):
         obj = object.__new__(cls)
         obj._value_ = name
-        # TODO: Maybe story a more general 'kind'
-        obj._is_terminal = is_terminal
+        obj._symbol_kind = symbol_kind
         return obj
 
     # TODO: __init_subclass__ to add a hidden _EOF and
     # check uniqueness would be great.
 
     def is_terminal(self):
-        return self._is_terminal is True
+        return self._symbol_kind is True
 
     def is_nonterminal(self):
-        return self._is_terminal is False
+        return self._symbol_kind is False
 
     def __repr__(self):
         return '<{}.{}: {!r}>'.format(
-            self.__class__.__name__, self.name, self._is_terminal)
+            self.__class__.__name__, self.name, self._symbol_kind)
 
 
 def get_eof_symbol(symbol_enum):
     """Get the End-Of-File symbol for a SymbolEnum."""
-    eofs = [symbol for symbol in symbol_enum if symbol._is_terminal is None]
+    eofs = [symbol for symbol in symbol_enum if symbol._symbol_kind is None]
     return eofs[0]
 
 
@@ -53,60 +53,55 @@ def get_eof_symbol(symbol_enum):
 Rule = namedtuple('Rule', ['head', 'children'])
 
 
-# TODO: It doesn't work yet, better interface than RuleMap though.
-# TODO: Python3.6 __init_subclass__ should replace the meta class.
-# I think it will work and be a one/two line function.
+# Like Enum, have a dummy so _RuleListingMeta knows if it has been made.
 RuleListing = None
-class RuleListingMeta(enum.EnumMeta):
+
+
+class _RuleListingMeta(enum.EnumMeta):
+
+    # Stores the symbol_type of the current RuleListing. As long as we don't
+    # have concurrent code loading, it should be fine.
+    _current_symbol_type = None
 
     @classmethod
-    def __prepare__(meta, class_name, bases, *, symbols_from=None):
+    def __prepare__(meta, class_name, bases, *, symbol_type=None):
         return super().__prepare__(class_name, bases)
 
-    @staticmethod
-    def __new__(meta, class_name, bases, namespace, *, symbols_from=None):
-        if RuleListing is not None and symbols_from is None:
-            raise RuntimeError('Must provide symbols_from.')
+    def __new__(meta, class_name, bases, namespace, *, symbol_type=None):
+        if RuleListing is not None and symbol_type is None:
+            raise RuntimeError('Must provide symbol_type.')
         else:
-            # Yeah, I cheat to get around _EnumDict.
-            namespace._symbols_from = symbols_from
+            meta._current_symbol_type = symbol_type
+
         return super().__new__(meta, class_name, bases, namespace)
 
+    def __init__(meta, cls, bases, namespace, *, symbol_type=None):
+        super().__init__(cls, bases, namespace)
 
-class RuleListing(Rule, enum.Enum, metaclass=RuleListingMeta):
+
+class RuleListing(Rule, enum.Enum, metaclass=_RuleListingMeta):
+    """A convenience class for defining sets of rules.
+
+    If you want to define a immutable set of rules, that all draw from
+    the same SymbolEnum subclass (most grammar defintions should). Then
+    you can use this to do so.
+
+    class MySymbols(SymbolEnum):
+        PLUS = ('PLUS', False)
+        NUMBER = ('NUMBER', True)
+        _EOF = ('_EOF', None)
+
+    class MyRules(RuleListing, symbol_type=MySymbols):
+        ADD = 'PLUS', ['NUMBER', 'NUMBER']
+
+    This is mostly to save explicately calling the Rule constructor and
+    going through the symbol_type to access the symbol every time.
+    """
 
     def __new__(cls, head, children):
-        def as_symbol(text):
-            return getattr(cls.__dict__._symbol_type, text)
-
+        symbol_type = type(cls)._current_symbol_type
         return super().__new__(cls,
-            as_symbol(head), tuple(map(as_symbol, children)))
-
-
-class RuleMap(dict):
-
-   def __init__(self, symbol_type, **item_pairs):
-       self._symbol_type = symbol_type
-       for key, value in item_pairs.items():
-           self[key] = value
-
-   def __setitem__(self, key, item):
-       def translate(value):
-           if isinstance(value, self._symbol_type):
-               return value
-           elif isinstance(value, str):
-               return getattr(self._symbol_type, value)
-           else:
-               raise TypeError(value)
-
-       if isinstance(item, Rule):
-           super().__setitem__(key, item)
-       elif isinstance(item, (tuple, list)) and 2 == len(item):
-           super().__setitem__(
-               key,
-               Rule(translate(item[0]), tuple(map(translate, item[1]))))
-       else:
-           raise TypeError(item)
+            symbol_type(head), tuple(map(symbol_type, children)))
 
 
 class Node:
