@@ -1,124 +1,137 @@
-"""Defining the raw key value pairs for op_code."""
+"""Defining the raw key value pairs for op_code.
 
+This module should be considered an implementation detail of op_code
+and so should never be used outside that module.
 
-_BASIC_OFFSET = 0
+The operation dictionaries all store Tuple[Optional[int], str]. The
+integer is the op-code of the instruction, Pseudo operations have
+None as they do not have a particular op-code. The string is the
+format of instruction, showing what arguments it takes.
+
+Letters indicate the type of each argument and are listed in the
+order they appear.
+
+O: Operation, implied at the start of all formats (7-bits unsigned)
+A,B,C: The first, second and third registers. Currently provided
+seperately for visual differentation. (5-bits unsigned each)
+I: Immediate value (20-bits unsigned)
+L: Long immediate value (32-bits unsigned)
+S: Short immediate value (10-bits signed)
+"""
+
+# TODO: Consider lower case letters as optional arguments:
+# +   Allows any command to be filled, with extra data if wanted.
+#     Which is currently possible only for ABCS, AI & L commands.
+# +   Operations like MOV, which often don't care about all their arguments
+#     (the arival location is often ignored) can declare them optional.
 
 
 _BASIC_OPERATIONS = {
-    'ADD': 0,
-    'SUB': 1,
-    'MUL': 2,
-    'DIV': 3,
-    'AND': 4,
-    'ORR': 5,
-    'XOR': 6,
-    'NAN': 7,
-    'CLZ': 8,
-    'CNT': 9,
-    'LSR': 10,
-    'LSL': 11,
-    'ABS': 12,
-    'RND': 13,
-    'CMP': 14,
-    'JIZ': 15,
-    'JNZ': 16,
-    'JGZ': 17,
-    'JLZ': 18,
-    'JGE': 19,
-    'JLE': 20,
-    'BIZ': 21,
-    'BNZ': 22,
-    'BGZ': 23,
-    'BLZ': 24,
-    'BGE': 25,
-    'BLE': 26,
-    'BLX': 27,
-    'LDR': 28,
-    'STR': 29,
-    'POP': 30,
-    'PSH': 31,
+    'ADD': (0, 'ABCS'),
+    'SUB': (1, 'ABCS'),
+    'MUL': (2, 'ABCS'),
+    'DIV': (3, 'ABCS'),
+    'AND': (4, 'ABCS'),
+    'ORR': (5, 'ABCS'),
+    'XOR': (6, 'ABCS'),
+    'NAN': (7, 'ABCS'),
+    'CLZ': (8, 'ABCS'),
+    'CNT': (9, 'ABCS'),
+    'LSR': (10, 'ABCS'),
+    'LSL': (11, 'ABCS'),
+    'ABS': (12, 'ABCS'),
+    'RND': (13, 'ABCS'),
+    'CMP': (14, 'ABCS'),
+    'JIZ': (15, 'AI'),
+    'JNZ': (16, 'AI'),
+    'JGZ': (17, 'AI'),
+    'JLZ': (18, 'AI'),
+    'JGE': (19, 'AI'),
+    'JLE': (20, 'AI'),
+    'BIZ': (21, 'AI'),
+    'BNZ': (22, 'AI'),
+    'BGZ': (23, 'AI'),
+    'BLZ': (24, 'AI'),
+    'BGE': (25, 'AI'),
+    'BLE': (26, 'AI'),
+    'BLX': (27, 'AI'),
+    'LDR': (28, 'ABCS'),
+    'STR': (29, 'ABCS'),
+    'POP': (30, 'ABCS'),
+    'PSH': (31, 'ABCS'),
     }
-
-
-_COMBAT_OFFSET = 32
 
 
 _COMBAT_OPERATIONS = {
-    'WHO': 0,
-    'WHT': 1,
-    'QCS': 2,
-    'QCT': 3,
-    'QBP': 4,
-    'QCK': 5,
-    'GND': 6,
-    'WHR': 7,
-    'DST': 8,
-    'CVR': 9,
-    'DED': 10,
-    'SHT': 11,
-    'DIR': 12,
-    'WLK': 13,
-    'CRL': 14,
-    'SWM': 15,
-    'CAP': 16,
-    'LIN': 17,
-    'HID': 18,
-    'SAY': 19,
-    'RAD': 20,
-    'YEL': 21,
-    'EAR': 22,
-    'DIE': 23,
-    'NRT': 24,
-    'NRE': 25,
-    'EST': 26,
-    'SOE': 27,
-    'SOT': 28,
-    'SOW': 29,
-    'WST': 30,
-    'NRW': 31,
+    'WHO': (32, 'ABCS'),
+    'WHT': (33, 'ABCS'),
+    'QCS': (34, 'ABCS'),
+    'QCT': (35, 'ABCS'),
+    'QBP': (36, 'ABCS'),
+    'QCK': (37, 'ABCS'),
+    'GND': (38, 'ABCS'),
+    'WHR': (39, 'ABCS'),
+    'DST': (40, 'ABCS'),
+    'CVR': (41, 'ABCS'),
+    'DED': (42, 'ABCS'),
+    'SHT': (43, 'ABCS'),
+    'DIR': (44, 'ABCS'),
+    'WLK': (45, 'ABCS'),
+    'CRL': (46, 'ABCS'),
+    'SWM': (47, 'ABCS'),
+    'CAP': (48, ''),
+    'LIN': (49, ''),
+    'HID': (50, 'AI'),
+    'SAY': (51, 'AI'),
+    'RAD': (52, 'AI'),
+    'YEL': (53, 'AI'),
+    'EAR': (54, 'AI'),
+    'DIE': (55, 'ABCS'),
+    'NRT': (56, 'ABCS'),
+    'NRE': (57, 'ABCS'),
+    'EST': (58, 'ABCS'),
+    'SOE': (59, 'ABCS'),
+    'SOT': (60, 'ABCS'),
+    'SOW': (61, 'ABCS'),
+    'WST': (62, 'ABCS'),
+    'NRW': (63, 'ABCS'),
     }
-
-
-_UPGRADE_OFFSET = 64
 
 
 _UPGRADE_OPERATIONS = {
-    'WHO': 0,
-    'WHT': 1,
-    'QCS': 2,
-    'QCT': 3,
-    'QBP': 4,
-    'QCK': 5,
-    'GND': 6,
-    'WHR': 7,
-    'DST': 8,
-    'CVR': 9,
-    'DED': 10,
-    'SHT': 11,
-    'DIR': 12,
-    'WLK': 13,
-    'CRL': 14,
-    'SWM': 15,
-    'CAP': 16,
-    'LIN': 17,
-    'HID': 18,
-    'SAY': 19,
-    'RAD': 20,
-    'YEL': 21,
-    'EAR': 22,
-    'DIE': 23,
-    'NRT': 24,
-    'NRE': 25,
-    'EST': 26,
-    'SOE': 27,
-    'SOT': 28,
-    'SOW': 29,
-    'WST': 30,
-    'NRW': 31,
+    'WCS': (64, 'A'),
+    'WCT': (65, 'A'),
+    'WBP': (66, 'A'),
+    'WCL': (67, 'A'),
+    'TCS': (68, 'AI'),
+    'TCT': (69, 'AI'),
+    'TBP': (70, 'AI'),
+    'TCL': (71, 'AI'),
+    'PNT': (72, 'A'),
+    'CCS': (73, 'A'),
+    'CCT': (74, 'A'),
+    'CBP': (75, 'A'),
+    'CCL': (76, 'A'),
+    'UCS': (77, 'A'),
+    'UCT': (78, 'A'),
+    'UBP': (79, 'A'),
+    'UCL': (80, 'A'),
+    'DCS': (81, 'A'),
+    'DCT': (82, 'A'),
+    'DBP': (83, 'A'),
+    'DCL': (84, 'A'),
+    'MCS': (85, 'A'),
+    'MCT': (86, 'A'),
+    'MBP': (87, 'A'),
+    'MCL': (88, 'A'),
+    'RCS': (89, 'A'),
+    'RCT': (90, 'A'),
+    'RBP': (91, 'A'),
+    'RCL': (92, 'A'),
+    'TIM': (93, 'ABCS'),
+    'DLY': (94, ''),
+    'ADV': (95, ''),
     }
-
-
-_SPECIAL_OFFSET = 96
 
 
 _CAPTAIN_OPERATIONS = {
@@ -149,6 +162,6 @@ _RIFLEMAN_OPERATIONS = {
     }
 
 
-_PSEUDO_OPERATIONS = [
-    'RAW',
-    ]
+_PSEUDO_OPERATIONS = {
+    'RAW': (None, 'L'),
+    }

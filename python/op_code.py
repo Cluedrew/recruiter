@@ -24,13 +24,9 @@ from itertools import chain, repeat
 from typing import Mapping, Optional, FrozenSet
 
 from _op_code import (
-    _BASIC_OFFSET,
     _BASIC_OPERATIONS,
-    _COMBAT_OFFSET,
     _COMBAT_OPERATIONS,
-    _UPGRADE_OFFSET,
     _UPGRADE_OPERATIONS,
-    _SPECIAL_OFFSET,
     _CAPTAIN_OPERATIONS,
     _MORTAR_OPERATIONS,
     _SNIPER_OPERATIONS,
@@ -57,7 +53,13 @@ class OpData:
         self.format = format
 
 
-OpCodeMapping = Mapping[str, Optional[str]]
+class OpCodeMapping(dict, Mapping[str, Optional[str]]):
+
+    def __init__(self, *source_mappings):
+        super().__init__(map(
+            lambda kvp: (kvp[0], OpData(*kvp[1])),
+            chain.from_iterable(map.items() for map in map_iter)
+            )
 
 
 # TODO: Python 3.6 has the variable annotation, although I don't know
@@ -88,22 +90,16 @@ OPERATIONS = frozenset(
           ))
 
 
-def _items_offset(mapping, offset):
-    for key, value in mapping.items():
-        yield key, value + offset
-
-
 _GENERAL_OPERATIONS = dict(
-    chain(zip(_PSEUDO_OPERATIONS, repeat(None)),
-          _items_offset(_BASIC_OPERATIONS, _BASIC_OFFSET),
-          _items_offset(_COMBAT_OPERATIONS, _COMBAT_OFFSET),
-          _items_offset(_UPGRADE_OPERATIONS, _UPGRADE_OFFSET),
+    chain(_PSEUDO_OPERATIONS,
+          _BASIC_OPERATIONS,
+          _COMBAT_OPERATIONS,
+          _UPGRADE_OPERATIONS,
           ))
 
 
 def _unit_op_map(mapping):
-    return dict(chain(_GENERAL_OPERATIONS.items(),
-                      _items_offset(mapping, _SPECIAL_OFFSET)))
+    return OpCodeMapping(_GENERAL_OPERATIONS, mapping)
 
 
 
