@@ -13,11 +13,14 @@ from slr1 import (
     generate_action_table,
     fill_kernal_label,
     fill_terminals_first_set,
+    insert_starting_state,
     Item,
     Label,
+    make_imaginary_rule,
     rule_first_set,
     rule_follow_set,
     shift_all,
+    StateGraph,
     SymbolData,
     update_rule_nullable,
     )
@@ -126,6 +129,22 @@ class TestMakeSymbolData(unittest.TestCase):
 
 
 class TestMakeStateGraph(unittest.TestCase):
+
+    class StartEnd(SymbolEnum):
+        START = ('START', False)
+        END = ('END', None)
+
+    def test_make_imaginary_rule(self):
+        Simple = self.StartEnd
+        self.assertEqual(Rule(Simple.END, (Simple.START, Simple.END)),
+                         make_imaginary_rule(Simple, Simple.START))
+
+    def test_insert_starting_state(self):
+        graph = StateGraph()
+        Sym = self.StartEnd
+        rule = make_imaginary_rule(Sym, Sym.START)
+        insert_starting_state(graph, rule, [])
+        self.assertTrue((Label([Item(rule)]), {}), graph._states[0])
 
     class Sym1(SymbolEnum):
         HEAD = ('HEAD', False)

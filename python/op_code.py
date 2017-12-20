@@ -53,13 +53,13 @@ class OpData:
         self.format = format
 
 
-class OpCodeMapping(dict, Mapping[str, Optional[str]]):
+class OpCodeMapping(dict, Mapping[str, OpData]):
 
     def __init__(self, *source_mappings):
         super().__init__(map(
             lambda kvp: (kvp[0], OpData(*kvp[1])),
-            chain.from_iterable(map.items() for map in map_iter)
-            )
+            chain.from_iterable(map.items() for map in source_mappings)
+            ))
 
 
 # TODO: Python 3.6 has the variable annotation, although I don't know
@@ -90,17 +90,14 @@ OPERATIONS = frozenset(
           ))
 
 
-_GENERAL_OPERATIONS = dict(
-    chain(_PSEUDO_OPERATIONS,
-          _BASIC_OPERATIONS,
-          _COMBAT_OPERATIONS,
-          _UPGRADE_OPERATIONS,
-          ))
-
-
-def _unit_op_map(mapping):
-    return OpCodeMapping(_GENERAL_OPERATIONS, mapping)
-
+def _unit_op_map(unit_operations):
+    return OpCodeMapping(
+        _PSEUDO_OPERATIONS,
+        _BASIC_OPERATIONS,
+        _COMBAT_OPERATIONS,
+        _UPGRADE_OPERATIONS,
+        unit_operations,
+        )
 
 
 CAPTAIN_OPERATIONS = _unit_op_map(_CAPTAIN_OPERATIONS)

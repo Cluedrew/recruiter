@@ -185,14 +185,19 @@ class StateGraph:
 def make_state_graph(symbols, starting_symbol, rules, symbol_data):
     graph = StateGraph()
     imaginary_rule = make_imaginary_rule(symbols, starting_symbol)
-    initial_label = fill_kernal_label(rules, Label([Item(imaginary_rule)]))
-    graph.default_lookup(initial_label)
+    insert_starting_state(graph, imaginary_rule, rules)
 
     for state in graph.iter_state_ids():
         for symbol in symbols:
             if symbol.is_terminal() or symbol.is_nonterminal():
                 build_transition(graph, rules, state, symbol)
     return graph
+
+
+def insert_starting_state(graph, imaginary_rule, rules):
+    kernal_label = Label([Item(imaginary_rule)])
+    starting_label = fill_kernal_label(rules, kernal_label)
+    graph.default_lookup(starting_label)
 
 
 def make_imaginary_rule(symbols, starting_symbol):

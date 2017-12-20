@@ -2,6 +2,7 @@
 
 
 __all__ = [
+    'iter_terminals_from_str',
     ]
 
 
@@ -17,6 +18,12 @@ from slr1 import generate_action_table
 class NodeSymbol(cfg.SymbolEnum):
     START = ('START', False)
     INSTRUCTION = ('INSTRUCTION', False)
+    OPERATION = ('OPERATION', False)
+    ARGS = ('ARGS', False)
+    ARG_TAIL = ('ARG_TAIL', False)
+    ARGUMENT = ('ARGUMENT', False)
+    REGISTER = ('REGISTER', False)
+    INTEGER = ('INTEGER', False)
 
     Word = ('Word', True)
     Register = ('Register', True)
@@ -60,6 +67,16 @@ Integer = NodeSymbol.Integer
 Comma = NodeSymbol.Comma
 
 
+class VNSRules(cfg.RuleListing, symbol_type=NodeSymbol):
+    LINE = 'START', ['OPERATION', 'ARGS']
+    NO_ARG = 'ARGS', []
+    ONE_ARG = 'ARGS', ['ARGUMENT']
+    MULTI_ARG = 'ARGS', ['ARGUMENT', 'ARG_TAIL']
+    MORE_ARGS = 'ARG_TAIL', ['Comma', 'ARGUMENT', 'ARG_TAIL']
+    ARG_REGISTER = 'ARGUMENT', ['REGISTER']
+    ARG_IMEDIATE = 'ARGUMENT', ['INTEGER']
+
+
 S_INST = cfg.Rule(START, (INSTRUCTION,))
 INST_OP = cfg.Rule(INSTRUCTION, (Operation,))
 INST_OA = cfg.Rule(INSTRUCTION, (Operation, Register))
@@ -72,7 +89,7 @@ ALL_RULES = (S_INST, INST_OP, INST_OA, INST_OAI, INST_OABC)
 
 
 _action_table = None
-# generate_action_table(NodeSymbol, NodeSymbol.START, ALL_RULES)
+# generate_action_table(NodeSymbol, NodeSymbol.START, VNSRules)
 
 
 def parse_string(string):
