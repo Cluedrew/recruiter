@@ -59,14 +59,6 @@ TERMINAL_PATTERNS = [
     ]
 
 
-START = NodeSymbol.START
-INSTRUCTION = NodeSymbol.INSTRUCTION
-Operation = NodeSymbol.Operation
-Register = NodeSymbol.Register
-Integer = NodeSymbol.Integer
-Comma = NodeSymbol.Comma
-
-
 class VNSRules(cfg.RuleListing, symbol_type=NodeSymbol):
     LINE = 'START', ['OPERATION', 'ARGS']
     NO_ARG = 'ARGS', []
@@ -75,17 +67,6 @@ class VNSRules(cfg.RuleListing, symbol_type=NodeSymbol):
     MORE_ARGS = 'ARG_TAIL', ['Comma', 'ARGUMENT', 'ARG_TAIL']
     ARG_REGISTER = 'ARGUMENT', ['REGISTER']
     ARG_IMEDIATE = 'ARGUMENT', ['INTEGER']
-
-
-S_INST = cfg.Rule(START, (INSTRUCTION,))
-INST_OP = cfg.Rule(INSTRUCTION, (Operation,))
-INST_OA = cfg.Rule(INSTRUCTION, (Operation, Register))
-INST_OAI = cfg.Rule(INSTRUCTION, (Operation, Register, Comma, Integer))
-INST_OABC = cfg.Rule(
-    INSTRUCTION, (Operation, Register, Comma, Register, Comma, Register))
-
-
-ALL_RULES = (S_INST, INST_OP, INST_OA, INST_OAI, INST_OABC)
 
 
 _action_table = None

@@ -3,6 +3,10 @@
 
 from collections import defaultdict
 import unittest
+from unittest.mock import (
+    call,
+    patch,
+    )
 
 
 from cfg import (
@@ -12,6 +16,7 @@ from cfg import (
 from slr1 import (
     generate_action_table,
     fill_kernal_label,
+    fill_state_graph,
     fill_terminals_first_set,
     insert_starting_state,
     Item,
@@ -144,7 +149,35 @@ class TestMakeStateGraph(unittest.TestCase):
         Sym = self.StartEnd
         rule = make_imaginary_rule(Sym, Sym.START)
         insert_starting_state(graph, rule, [])
-        self.assertTrue((Label([Item(rule)]), {}), graph._states[0])
+        self.assertEqual(1, len(graph._states))
+        self.assertEqual((Label([Item(rule)]), {}), graph._states[0])
+
+    def test_fill_state_graph(self):
+        class Sym(SymbolEnum):
+            START = ('START', False)
+            MIDDLE = ('MIDDLE', True)
+            END = ('END', None)
+
+        #class Rules(RuleListing):
+        Rules = (Rule(Sym.START, (Sym.MIDDLE, Sym.MIDDLE)),)
+
+        graph = StateGraph()
+        with patch.object(graph, 'iter_state_ids', return_value=range(3)):
+            with patch('slr1.build_transition') as mock_bt:
+                fill_state_graph(graph, Sym, Rules)
+        self.assertEqual(9, mock_bt.call_count)
+        self.assertEqual(
+            mock_bt.call_args_list, [
+                call(graph, Rules, 0, Sym.START),
+                call(graph, Rules, 0, Sym.MIDDLE),
+                call(graph, Rules, 0, Sym.END),
+                call(graph, Rules, 1, Sym.START),
+                call(graph, Rules, 1, Sym.MIDDLE),
+                call(graph, Rules, 1, Sym.END),
+                call(graph, Rules, 2, Sym.START),
+                call(graph, Rules, 2, Sym.MIDDLE),
+                call(graph, Rules, 2, Sym.END),
+                ])
 
     class Sym1(SymbolEnum):
         HEAD = ('HEAD', False)

@@ -186,11 +186,7 @@ def make_state_graph(symbols, starting_symbol, rules, symbol_data):
     graph = StateGraph()
     imaginary_rule = make_imaginary_rule(symbols, starting_symbol)
     insert_starting_state(graph, imaginary_rule, rules)
-
-    for state in graph.iter_state_ids():
-        for symbol in symbols:
-            if symbol.is_terminal() or symbol.is_nonterminal():
-                build_transition(graph, rules, state, symbol)
+    fill_state_graph(graph, symbols, rules)
     return graph
 
 
@@ -203,6 +199,12 @@ def insert_starting_state(graph, imaginary_rule, rules):
 def make_imaginary_rule(symbols, starting_symbol):
     eof = get_eof_symbol(symbols)
     return Rule(eof, (starting_symbol, eof))
+
+
+def fill_state_graph(graph, symbols, rules):
+    for state in graph.iter_state_ids():
+        for symbol in symbols:
+            build_transition(graph, rules, state, symbol)
 
 
 def build_transition(graph, rules, state, symbol):
