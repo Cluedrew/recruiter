@@ -8,7 +8,7 @@ from cfg import (
     )
 from grammar import (
     iter_terminals_from_str,
-    NodeSymbol,
+    VNSSymbols,
     )
 
 
@@ -20,9 +20,9 @@ class TestNode(unittest.TestCase):
 
     def test_iter_terminals_from_str(self):
         target = [
-            (NodeSymbol.Register, 'r4'),
-            (NodeSymbol.Comma, ','),
-            (NodeSymbol.Identifier, 'hi'),
+            (VNSSymbols.Register, 'r4'),
+            (VNSSymbols.Comma, ','),
+            (VNSSymbols.Identifier, 'hi'),
             ]
         self.assertEqual(target, list_terminals_from_str('r4 ,hi'))
 
@@ -33,4 +33,4 @@ class TestNode(unittest.TestCase):
 
     def test_parse_operation_upper(self):
         tokens = list_terminals_from_str('ADD')
-        self.assertEqual([(NodeSymbol.Operation, 'ADD')], tokens)
+        self.assertEqual([(VNSSymbols.Operation, 'ADD')], tokens)

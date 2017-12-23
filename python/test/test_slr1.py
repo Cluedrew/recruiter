@@ -10,10 +10,14 @@ from unittest.mock import (
 
 
 from cfg import (
+    Action,
+    ActionTable,
     Rule,
     SymbolEnum,
     )
 from slr1 import (
+    add_reduce_operations,
+    add_shift_and_done_operations,
     generate_action_table,
     fill_kernal_label,
     fill_state_graph,
@@ -133,6 +137,23 @@ class TestMakeSymbolData(unittest.TestCase):
             rule_follow_set(rule, symbol_data))
 
 
+class TestStateGraph(unittest.TestCase):
+
+    def small_state_graph(self, label=Label('a')):
+        graph = StateGraph()
+        graph._states.append((label, {}))
+        return graph
+
+    def test_lookup(self):
+        graph = self.small_state_graph()
+        self.assertEqual(0, graph.lookup(Label('a')))
+
+    def test_lookup_miss(self):
+        graph = self.small_state_graph()
+        with self.assertRaises(KeyError):
+            graph.lookup(Label('b'))
+
+
 class TestMakeStateGraph(unittest.TestCase):
 
     class StartEnd(SymbolEnum):
@@ -158,7 +179,6 @@ class TestMakeStateGraph(unittest.TestCase):
             MIDDLE = ('MIDDLE', True)
             END = ('END', None)
 
-        #class Rules(RuleListing):
         Rules = (Rule(Sym.START, (Sym.MIDDLE, Sym.MIDDLE)),)
 
         graph = StateGraph()
@@ -251,4 +271,28 @@ class TestMakeStateGraph(unittest.TestCase):
 
 
 class TestMakeActionTable(unittest.TestCase):
-    pass
+
+    class Symbols(SymbolEnum):
+        START = ('START', False)
+        MIDDLE = ('MIDDLE', True)
+        END = ('END', None)
+
+    def test_add_shift_and_done_operations(self):
+        Symbols = self.Symbols
+        table = ActionTable()
+        graph = StateGraph()
+        graph._states.append((None, {Symbols.MIDDLE: 1, Symbols.END: 2}))
+        add_shift_and_done_operations(table, graph, Symbols)
+        self.assertEqual(Action('shift', 1), table[0, Symbols.MIDDLE])
+        self.assertEqual(Action('done', None), table[0, Symbols.END])
+
+    def test_add_reduce_operations(self):
+        Symbols = self.Symbols
+        rule = Rule(Symbols.START, (Symbols.MIDDLE,))
+        table = ActionTable()
+        graph = StateGraph()
+        graph._states.append((Label.from_rule(rule, 1), {}))
+        data = SymbolData()
+        data[Symbols.START].follow_set.add(Symbols.END)
+        add_reduce_operations(table, graph, data)
+        self.assertEqual(Action('reduce', rule), table[0, Symbols.END])

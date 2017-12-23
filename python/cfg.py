@@ -136,7 +136,7 @@ class NonterminalNode(Node):
         super().__init__(symbol)
         self.children = children
         if rule is None:
-            rule = Rule(symbol, map(lambda child: child.symbol, children))
+            rule = Rule(symbol, tuple(child.symbol for child in children))
         self.rule = rule
 
     def __repr__(self):
@@ -203,7 +203,7 @@ class ActionTable(Mapping):
         self._data = {}
         self.starting_state = 0
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, action):
         state, symbol = key
         section = self._data.setdefault(state, {})
         if symbol in section:
@@ -237,6 +237,11 @@ class Action:
     def __init__(self, kind, data):
         self.kind = kind
         self.data = data
+
+    def __eq__(self, other):
+        if not isinstance(other, Action):
+            raise TypeError('Not comparable with Action.', other)
+        return self.kind == other.kind and self.data == other.data
 
     @classmethod
     def shift(cls, to_state):

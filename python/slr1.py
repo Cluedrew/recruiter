@@ -156,7 +156,7 @@ class StateGraph:
             return id
 
     def lookup(self, label):
-        for state_id, state_label in enumerate(self._states):
+        for state_id, (state_label, _) in enumerate(self._states):
             if state_label == label:
                 return state_id
         raise KeyError(label)
@@ -176,10 +176,8 @@ class StateGraph:
         yield from map(lambda x: x[0], enumerate(self._states))
 
     def iter_states(self):
-        yield from enumerate(self._states)
-
-    def follow_transition(self, state, edge):
-        return self._states[state][1][edge]
+        for (id, (label, transitions)) in enumerate(self._states):
+            yield (id, label, transitions)
 
 
 def make_state_graph(symbols, starting_symbol, rules, symbol_data):
@@ -190,15 +188,15 @@ def make_state_graph(symbols, starting_symbol, rules, symbol_data):
     return graph
 
 
-def insert_starting_state(graph, imaginary_rule, rules):
-    kernal_label = Label([Item(imaginary_rule)])
-    starting_label = fill_kernal_label(rules, kernal_label)
-    graph.default_lookup(starting_label)
-
-
 def make_imaginary_rule(symbols, starting_symbol):
     eof = get_eof_symbol(symbols)
     return Rule(eof, (starting_symbol, eof))
+
+
+def insert_starting_state(graph, imaginary_rule, rules):
+    kernal_label = Label.from_rule(imaginary_rule)
+    starting_label = fill_kernal_label(rules, kernal_label)
+    graph.default_lookup(starting_label)
 
 
 def fill_state_graph(graph, symbols, rules):
@@ -237,6 +235,10 @@ def fill_kernal_label(rules, kernal_label):
 class Label(frozenset):
     """A set of Items."""
 
+    @classmethod
+    def from_rule(cls, rule, pos=0):
+        return cls([Item(rule, pos)])
+
 
 def make_action_table(graph, symbols, symbol_data):
     action_table = ActionTable()
@@ -247,19 +249,17 @@ def make_action_table(graph, symbols, symbol_data):
 
 def add_shift_and_done_operations(table, graph, symbols):
     eof = get_eof_symbol(symbols)
-    for state, label in graph.iter_states():
-        for symbol in symbols:
-            if shift_all(label, symbol):
-                if symbol is not eof:
-                    dst = graph.follow_transition(state, symbol)
-                    table[state, symbol] = Action.shift(dst)
-                else:
-                    table[state, symbol] = Action.done()
+    for state, _, transitions in graph.iter_states():
+        for symbol in transitions:
+            if symbol is not eof:
+                table[state, symbol] = Action.shift(transitions[symbol])
+            else:
+                table[state, symbol] = Action.done()
 
 
 def add_reduce_operations(table, graph, symbol_data):
-    for state, label in graph.iter_states():
+    for state, label, _ in graph.iter_states():
         for item in label:
-            if item.is_full():
+            if item.is_finished():
                 for symbol in symbol_data[item.head].follow_set:
                     table[state, symbol] = Action.reduce(item.rule)

@@ -15,17 +15,14 @@ from slr1 import generate_action_table
 
 
 @enum.unique
-class NodeSymbol(cfg.SymbolEnum):
+class VNSSymbols(cfg.SymbolEnum):
     START = ('START', False)
     INSTRUCTION = ('INSTRUCTION', False)
     OPERATION = ('OPERATION', False)
     ARGS = ('ARGS', False)
     ARG_TAIL = ('ARG_TAIL', False)
     ARGUMENT = ('ARGUMENT', False)
-    REGISTER = ('REGISTER', False)
-    INTEGER = ('INTEGER', False)
 
-    Word = ('Word', True)
     Register = ('Register', True)
     Operation = ('Operation', True)
     Integer = ('Integer', True)
@@ -51,28 +48,28 @@ def remove_terminal_from_str(string):
 
 
 TERMINAL_PATTERNS = [
-    (NodeSymbol.Register, re.compile('\\br([12][0-9]|3[01]|[0-9])\\b')),
-    (NodeSymbol.Operation, re.compile('|'.join(OPERATIONS), re.IGNORECASE)),
-    (NodeSymbol.Integer, re.compile('[0-9]+')),
-    (NodeSymbol.Identifier, re.compile('[_a-zA-Z][_a-zA-Z0-9]*')),
-    (NodeSymbol.Comma, re.compile(',')),
+    (VNSSymbols.Register, re.compile('\\br([12][0-9]|3[01]|[0-9])\\b')),
+    (VNSSymbols.Operation, re.compile('|'.join(OPERATIONS), re.IGNORECASE)),
+    (VNSSymbols.Integer, re.compile('[0-9]+')),
+    (VNSSymbols.Identifier, re.compile('[_a-zA-Z][_a-zA-Z0-9]*')),
+    (VNSSymbols.Comma, re.compile(',')),
     ]
 
 
-class VNSRules(cfg.RuleListing, symbol_type=NodeSymbol):
+class VNSRules(cfg.RuleListing, symbol_type=VNSSymbols):
     LINE = 'START', ['OPERATION', 'ARGS']
     NO_ARG = 'ARGS', []
     ONE_ARG = 'ARGS', ['ARGUMENT']
     MULTI_ARG = 'ARGS', ['ARGUMENT', 'ARG_TAIL']
     MORE_ARGS = 'ARG_TAIL', ['Comma', 'ARGUMENT', 'ARG_TAIL']
-    ARG_REGISTER = 'ARGUMENT', ['REGISTER']
-    ARG_IMEDIATE = 'ARGUMENT', ['INTEGER']
+    ARG_REGISTER = 'ARGUMENT', ['Register']
+    ARG_IMEDIATE = 'ARGUMENT', ['Integer']
+    ARG_IDENTIFIER = 'ARGUMENT', ['Identifier']
 
 
-_action_table = None
-# generate_action_table(NodeSymbol, NodeSymbol.START, VNSRules)
+_action_table = generate_action_table(VNSSymbols, VNSSymbols.START, VNSRules)
 
 
 def parse_string(string):
     iter = iter_terminals_from_str(string)
-    return cfg.parse(NodeSymbol, _action_table, iter)
+    return cfg.parse(VNSSymbols, _action_table, iter)
