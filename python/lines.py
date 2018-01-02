@@ -1,11 +1,68 @@
 """Lines of code."""
 
 
+from pathlib import Path
+
+
 import node
 
 
 FIRST_ROW = 1
 FIRST_COL = 1
+
+
+class SourceFile:
+    """Wrapper around a source code file."""
+
+    def __init__(self, path):
+        self.path = path
+
+    @staticmethod
+    def from_name(name):
+        """Create a source file wrapper from the file name.
+
+        name is relative to the present/current working directory.
+        """
+        return SourceFile(Path(name).resolve())
+
+    def include(self, name):
+        """Include a new source file from this one.
+
+        Same as from_name, but if the file is not found, ties searching
+        from self's directory.
+        """
+        try:
+            return self.from_name(name)
+        except FileNotFoundError:
+            try:
+                return type(self)(Path(self.path.parent, name).resolve())
+            except FileNotFoundError:
+                pass
+            raise
+
+    def __iter__(self):
+        """Return an iterator that produces each logical line in the file."""
+        # Or just create an generator?
+        return SourceIter(self.path)
+
+
+class SourceIter:
+
+    def __init__(self, path):
+        self.path = path
+        self._file = path.open()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self._file.close()
+        self._file = None
+        raise StopIteration()
+
+    def __del__(self):
+        if self._file:
+            self._file.close()
 
 
 def iter_logical_lines(source_name):

@@ -62,7 +62,73 @@ class OperationNode(SyntaxNode):
         return arg_list
 
     def __str__(self):
-        return str(self.operation) + ', '.join(map(str, self.args))
+        return str(self.operation) + ' ' + ', '.join(map(str, self.args))
+
+
+def _get_register_default(args, i):
+    try:
+        return args[i]
+    except IndexError:
+        # Construct a fake 'r0' value.
+        return None
+
+
+def _get_immediate_default(args, i):
+    try:
+        return args[i]
+    except IndexError:
+        # Construct a fake '0' value.
+        return None
+
+
+class OperationABCSNode(OperationNode):
+
+    def __init__(self, parse_node):
+        super().__init__(parse_node)
+
+    @property
+    def register_a(self):
+        return _get_register_default(self.args, 0)
+
+    @property
+    def register_b(self):
+        return _get_register_default(self.args, 1)
+
+    @property
+    def register_c(self):
+        return _get_register_default(self.args, 2)
+
+    @property
+    def small_immediate(self):
+        return _get_immediate_default(self.args, 3)
+
+
+class OperationAINode(OperationNode):
+
+    def __init__(self, parse_node):
+        super().__init__(parse_node)
+
+    @property
+    def register_a(self):
+        return _get_register_default(self.args, 0)
+
+    @property
+    def immediate(self):
+        return _get_immediate_default(self.args, 1)
+
+
+#   if 'A' in self.format:
+#       self.register_a = RegisterGetter(0)
+#   elif 'a' in self.format:
+#       self.register_a = RegisterGetter(0, optional=True)
+#   if 'B' in self.format:
+#       self.register_b = RegisterGetter(1)
+#   elif 'b' in self.format:
+#       self.register_b = RegisterGetter(1, optional=True)
+#   if 'C' in self.format:
+#       self.register_c = RegisterGetter(2)
+#   elif 'c' in self.format:
+#       self.register_c = RegisterGetter(2, optional=True)
 
 
 class TerminalSyntaxNode(SyntaxNode):

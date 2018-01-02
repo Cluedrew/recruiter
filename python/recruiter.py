@@ -26,6 +26,22 @@
 # 4. Validate command input formats.
 # V. New Features:
 # I have ideas, but it is a bit far off right now.
+# 1. Dot values, special values like "." or ".section"
+
+# I'm just thinking about the main loop.
+# Setup:
+#   Create a store for definitions and any global settings.
+#   Parse and handle command line arguments.
+#   Open the main source file.
+# Loop:
+#   Get a logical line and (possibly recursively) parse it.
+#   Instructions should be dumped into the approprate section.
+#   Defines (labels and assignments) get added to the global definitions.
+#   Includes add to the stack of files to read from.
+# Cleanup:
+#   Writing to the executable probably has to wait for now, to make sure
+#   each section is full and all forward references are filled. Plus the
+#   typical cleanup.
 
 
 import argparse
