@@ -40,34 +40,15 @@ class SourceFile:
                 pass
             raise
 
+    def _iter_physical(self):
+        with self.path.open() as file:
+            for num, line in enumerate(file, start=FIRST_ROW):
+                yield PhysicalLine(line, str(self.path), num)
+
     def __iter__(self):
         """Return an iterator that produces each logical line in the file."""
-        # Or just create an generator?
-        return SourceIter(self.path)
-
-
-class SourceIter:
-
-    def __init__(self, path):
-        self.path = path
-        self._file = path.open()
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        self._file.close()
-        self._file = None
-        raise StopIteration()
-
-    def __del__(self):
-        if self._file:
-            self._file.close()
-
-
-def iter_logical_lines(source_name):
-    for physical_line in iter_physical_lines(source_name):
-        yield LogicalLine([physical_line])
+        for physical_line in iter_physical_lines(source_name):
+            yield LogicalLine([physical_line])
 
 
 class LogicalLine:
@@ -80,12 +61,6 @@ class LogicalLine:
         # non-terminal symbols as we go.
         text = ' '.join(map(lambda l: l.strip_comment(), self._physical))
         yield from node.iter_terminals_from_str(text)
-
-
-def iter_physical_lines(file_name):
-    with open(file_name) as file:
-        for num, line in enumerate(file, start=FIRST_ROW):
-            yield PhysicalLine(line, file_name, num)
 
 
 class PhysicalLine:

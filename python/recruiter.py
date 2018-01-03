@@ -46,12 +46,13 @@
 
 import argparse
 
-from lines import iter_logical_lines
+from lines import SourceFile
 
 
 def main(argv=None):
     args = parse_args(argv)
-    for line in iter_logical_lines(args.source):
+    # I'm going to need a stack of these.
+    for line in SourceFile(args.source):
         print('New line')
         for terminal in line:
             print('', terminal.symbol, terminal.text)
