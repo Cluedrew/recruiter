@@ -130,6 +130,47 @@ class OperationAINode(OperationNode):
 #   elif 'c' in self.format:
 #       self.register_c = RegisterGetter(2, optional=True)
 
+#   for ch in self.format:
+#       if ch in 'Aa':
+#           self.register_a = RegisterGetter(0, optional=ch.islower())
+#       elif ch in 'Bb':
+#           self.register_b = RegisterGetter(1, optional=ch.islower())
+
+# I am just making things up for a bit...
+# Haha, no, this is Python3.6 stuff!
+class ArgumentGetter:
+
+    def __init__(self, format_char, place):
+        self.format_char = format_char
+        self.place = place
+
+    def __get__(self, instance, owner):
+        if not hasattr(instance, self.key):
+            try:
+                setattr(instance, self.key, instance.args[self.place])
+            except IndexError:
+                setattr(instance, self.key, self._make_default())
+        return getattr(instance, self.key)
+
+    # Is 'set' actually allowed?
+    def __set__(self, instance, value):
+        setattr(instance, self.key, value)
+
+    # def __delete__(self, instance):
+
+    def __set_name__(self, owner, name):
+        self.key = '_' + name
+
+    def _make_default(self):
+        raise NotImplementedError()
+
+
+# OK, what do I need:
+# - To know the position the argument comes in.
+# - A function to type check the incoming value.
+# - (Maybe) If it is optional or not. (OK, I'm probably doing this.)
+# - A default value, or generator of defaults, for optional arguments.
+
 
 class TerminalSyntaxNode(SyntaxNode):
 
